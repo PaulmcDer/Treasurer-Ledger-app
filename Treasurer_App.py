@@ -49,7 +49,16 @@ for row in records:
 
     method = row["Method"]
     trans_type = row["Transaction Type"]
-    amount = float(row["Amount"] or 0)
+   
+    try:
+        amount = float(
+            str(row["Amount"])
+            .replace("€", "")
+            .replace(",", "")
+            .strip()
+        )
+    except:
+        amount = 0
 
     if method == "Cash Notes":
 
