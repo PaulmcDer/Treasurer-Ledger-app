@@ -77,32 +77,6 @@ for row in records:
             coins_balance -= amount
 
 # --------------------------------------------------
-# Money Calculation
-# --------------------------------------------------
-
-st.title("Current Balance")
-
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    st.metric(
-        "Notes on Hand",
-        f"€{notes_balance:,.2f}"
-    )
-
-with col2:
-    st.metric(
-        "Coins on Hand",
-        f"€{coins_balance:,.2f}"
-    )
-
-with col3:
-    st.metric(
-        "Total Cash",
-        f"€{notes_balance + coins_balance:,.2f}"
-    )
-
-# --------------------------------------------------
 # PAGE
 # --------------------------------------------------
 
@@ -243,17 +217,38 @@ admin_pin = st.text_input(
 )
 
 if admin_pin == st.secrets["ADMIN_PIN"]:
+    
+    st.title("Current Balance")
 
+    col1, col2, col3 = st.columns(3)
 
-    records = sheet.get_all_records()
+    with col1:
+        st.metric(
+            "Notes on Hand",
+            f"€{notes_balance:,.2f}"
+        )
 
-    df = pd.DataFrame(records)
+    with col2:
+        st.metric(
+            "Coins on Hand",
+            f"€{coins_balance:,.2f}"
+        )
 
-    st.subheader("Treasurer Ledger Entries")
+    with col3:
+        st.metric(
+            "Total Cash",
+            f"€{notes_balance + coins_balance:,.2f}"
+        )
 
-    search = st.text_input(
-        "Search Name / Payee"
-    )
+        records = sheet.get_all_records()
+
+        df = pd.DataFrame(records)
+
+        st.subheader("Treasurer Ledger Entries")
+
+        search = st.text_input(
+            "Search Name / Payee"
+        )
 
     if search:
 
