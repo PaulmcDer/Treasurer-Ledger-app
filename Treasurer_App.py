@@ -249,9 +249,6 @@ if admin_pin == st.secrets["ADMIN_PIN"]:
 
     df = pd.DataFrame(records)
 
-    # Newest entries first
-    df = df.iloc[::-1]
-
     st.subheader("Treasurer Ledger Entries")
 
     search = st.text_input(
