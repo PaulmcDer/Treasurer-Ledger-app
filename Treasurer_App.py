@@ -86,6 +86,15 @@ st.write(
     "Record cash, cheque, Revolut and Bank transactions."
 )
 
+
+st.markdown("---")
+
+admin_pin = st.text_input(
+    "Admin PIN",
+    type="password"
+)
+   
+
 # --------------------------------------------------
 # FORM
 # --------------------------------------------------
@@ -152,9 +161,11 @@ with st.form(
     )
 
     submit = st.form_submit_button(
-        "Save Transaction"
+        "Save Transaction",
+        disabled=admin_pin != st.secrets["ADMIN_PIN"]
     )
 
+    
 # --------------------------------------------------
 # SAVE RECORD
 # --------------------------------------------------
@@ -209,12 +220,6 @@ if st.session_state.show_success:
 # ADMIN VIEW
 # --------------------------------------------------
 
-st.markdown("---")
-
-admin_pin = st.text_input(
-    "Admin PIN",
-    type="password"
-)
 
 if admin_pin == st.secrets["ADMIN_PIN"]:
     
