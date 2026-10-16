@@ -36,11 +36,15 @@ sheet = client.open_by_key(SHEET_ID).worksheet("Treasurer_Ledger")
 records = sheet.get_all_records()
 
 # --------------------------------------------------
-# Calculate Note/Coins Balance
+# SESSION STATE
 # --------------------------------------------------
 
 if "show_success" not in st.session_state:
     st.session_state.show_success = False
+
+# --------------------------------------------------
+# Calculate Note/Coins Balance
+# --------------------------------------------------
 
 notes_balance = 0.0
 coins_balance = 0.0
@@ -49,7 +53,7 @@ for row in records:
 
     method = row["Method"]
     trans_type = row["Transaction Type"]
-   
+
     try:
         amount = float(
             str(row["Amount"])
@@ -77,200 +81,209 @@ for row in records:
             coins_balance -= amount
 
 # --------------------------------------------------
-# PAGE
+# TABS
 # --------------------------------------------------
 
-st.title("Treasurer Ledger")
-
-st.write(
-    "Record cash, cheque, Revolut and Bank transactions."
+tab1, tab2 = st.tabs(
+    [
+        "💰 Transactions",
+        "🔒 Admin"
+    ]
 )
 
-
-st.markdown("---")
-
-admin_pin = st.text_input(
-    "Admin PIN",
-    type="password"
-)
-   
-
 # --------------------------------------------------
-# FORM
+# TAB 1 - TRANSACTIONS
 # --------------------------------------------------
 
-with st.form(
-    "ledger_form",
-    clear_on_submit=True
-):
+with tab1:
 
-    name = st.text_input(
-        "Name / Payee"
+    st.title("Treasurer Ledger")
+
+    st.write(
+        "Record cash, cheque, Revolut and Bank transactions."
     )
 
-    category = st.selectbox(
-        "Category",
-        [
-            "Supporters Draw",
-            "50/50 Draw",
-            "Physio",
-            "Membership",
-            "Equipment",
-            "Club Shop",
-            "Lodgement",
-            "Sponsorship",
-            "Other"
-        ]
-    )
+    st.markdown("---")
 
-    transaction_type = st.selectbox(
-        "Transaction Type",
-        [
-            "Money In",
-            "Money Out",
-            "Lodgement",
-            "Withdrawel"
-        ]
-    )
+    with st.form(
+        "ledger_form",
+        clear_on_submit=True
+    ):
 
-    method = st.selectbox(
-        "Method",
-        [
-            "Cash Notes",
-            "Cash Coins",
-            "Revolut",
-            "BOI",
-            "Cheque",
-            "Credit Union"
-        ]
-    )
-
-    amount = st.number_input(
-        "Amount (€)",
-        min_value=0.0,
-        step=0.01,
-        format="%.2f"
-    )
-
-    cheque_number = st.text_input(
-        "Cheque Number (Optional)"
-    )
-
-    comments = st.text_area(
-        "Comments"
-    )
-
-    submit = st.form_submit_button(
-        "Save Transaction",
-        disabled=admin_pin != st.secrets["ADMIN_PIN"]
-    )
-
-    
-# --------------------------------------------------
-# SAVE RECORD
-# --------------------------------------------------
-
-if submit:
-
-    if not name.strip():
-
-        st.error(
-            "Please enter a Name / Payee."
+        name = st.text_input(
+            "Name / Payee"
         )
 
-    elif amount <= 0:
-
-        st.error(
-            "Amount must be greater than zero."
-        )
-
-    else:
-
-        timestamp = datetime.now().strftime(
-            "%d/%m/%Y %H:%M"
-        )
-
-        sheet.append_row(
+        category = st.selectbox(
+            "Category",
             [
-                timestamp,
-                name,
-                category,
-                transaction_type,
-                method,
-                amount,
-                cheque_number,
-                comments
+                "Supporters Draw",
+                "50/50 Draw",
+                "Physio",
+                "Membership",
+                "Equipment",
+                "Club Shop",
+                "Lodgement",
+                "Sponsorship",
+                "Other"
             ]
         )
 
-        st.session_state.show_success = True
-        st.rerun()
+        transaction_type = st.selectbox(
+            "Transaction Type",
+            [
+                "Money In",
+                "Money Out",
+                "Lodgement",
+                "Withdrawel"
+            ]
+        )
+
+        method = st.selectbox(
+            "Method",
+            [
+                "Cash Notes",
+                "Cash Coins",
+                "Revolut",
+                "BOI",
+                "Cheque",
+                "Credit Union"
+            ]
+        )
+
+        amount = st.number_input(
+            "Amount (€)",
+            min_value=0.0,
+            step=0.01,
+            format="%.2f"
+        )
+
+        cheque_number = st.text_input(
+            "Cheque Number (Optional)"
+        )
+
+        comments = st.text_area(
+            "Comments"
+        )
+
+        submit = st.form_submit_button(
+            "Save Transaction"
+        )
+
+    if submit:
+
+        if not name.strip():
+
+            st.error(
+                "Please enter a Name / Payee."
+            )
+
+        elif amount <= 0:
+
+            st.error(
+                "Amount must be greater than zero."
+            )
+
+        else:
+
+            timestamp = datetime.now().strftime(
+                "%d/%m/%Y %H:%M"
+            )
+
+            sheet.append_row(
+                [
+                    timestamp,
+                    name,
+                    category,
+                    transaction_type,
+                    method,
+                    amount,
+                    cheque_number,
+                    comments
+                ]
+            )
+
+            st.session_state.show_success = True
+            st.rerun()
+
+    if st.session_state.show_success:
+
+        st.success(
+            "✅ Transaction saved successfully."
+        )
+
+        st.session_state.show_success = False
 
 # --------------------------------------------------
-# Display success
+# TAB 2 - ADMIN
 # --------------------------------------------------
-if st.session_state.show_success:
 
-    st.success(
-        "✅ Transaction saved successfully."
+with tab2:
+
+    st.title("Treasurer Ledger Admin")
+
+    st.markdown("---")
+
+    admin_pin = st.text_input(
+        "Admin PIN",
+        type="password"
     )
 
-    st.session_state.show_success = False
-# --------------------------------------------------
-# ADMIN VIEW
-# --------------------------------------------------
+    if admin_pin == st.secrets["ADMIN_PIN"]:
 
+        st.subheader("Current Balance")
 
-if admin_pin == st.secrets["ADMIN_PIN"]:
-    
-    st.title("Current Balance")
+        col1, col2, col3 = st.columns(3)
 
-    col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric(
+                "Notes on Hand",
+                f"€{notes_balance:,.2f}"
+            )
 
-    with col1:
-        st.metric(
-            "Notes on Hand",
-            f"€{notes_balance:,.2f}"
-        )
+        with col2:
+            st.metric(
+                "Coins on Hand",
+                f"€{coins_balance:,.2f}"
+            )
 
-    with col2:
-        st.metric(
-            "Coins on Hand",
-            f"€{coins_balance:,.2f}"
-        )
-
-    with col3:
-        st.metric(
-            "Total Cash",
-            f"€{notes_balance + coins_balance:,.2f}"
-        )
+        with col3:
+            st.metric(
+                "Total Cash",
+                f"€{notes_balance + coins_balance:,.2f}"
+            )
 
         records = sheet.get_all_records()
 
         df = pd.DataFrame(records)
 
-        st.subheader("Treasurer Ledger Entries")
+        st.subheader(
+            "Treasurer Ledger Entries"
+        )
 
         search = st.text_input(
             "Search Name / Payee"
         )
 
-    if search:
+        if search:
 
-        df = df[
-            df["Name / Payee"].astype(str).str.contains(
-                search,
-                case=False,
-                na=False
-            )
-        ]
+            df = df[
+                df["Name / Payee"].astype(str).str.contains(
+                    search,
+                    case=False,
+                    na=False
+                )
+            ]
 
-    st.dataframe(
-        df,
-        use_container_width=True,
-        hide_index=True
-    )
+        st.dataframe(
+            df,
+            use_container_width=True,
+            hide_index=True
+        )
 
+    elif admin_pin:
+
+        st.error("Incorrect PIN")
 # --------------------------------------------------
 # FOOTER
 # --------------------------------------------------
