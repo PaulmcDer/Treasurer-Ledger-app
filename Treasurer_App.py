@@ -15,8 +15,6 @@ st.set_page_config(
     page_icon="💰",
     layout="centered"
 )
-
-
 # --------------------------------------------------
 # GOOGLE SHEETS CONNECTION
 # --------------------------------------------------
@@ -41,6 +39,9 @@ records = sheet.get_all_records()
 
 if "show_success" not in st.session_state:
     st.session_state.show_success = False
+
+if "save_pin_ok" not in st.session_state:
+    st.session_state.save_pin_ok = False
 
 # --------------------------------------------------
 # Calculate Note/Coins Balance
@@ -98,12 +99,34 @@ tab1, tab2 = st.tabs(
 with tab1:
 
     st.title("Treasurer Ledger")
+    st.write("Record cash, cheque, Revolut and Bank transactions.")
+    st.markdown("---")
 
-    st.write(
-        "Record cash, cheque, Revolut and Bank transactions."
+# ----------------------------------------------
+# 1️⃣ SAVE TRANSACTION PIN (separate from Admin)
+# ----------------------------------------------
+    st.subheader("Save Transaction PIN")
+
+    save_pin = st.text_input(
+        "Enter 4‑digit PIN",
+        type="password",
+        max_chars=4
     )
 
-    st.markdown("---")
+    if save_pin == st.secrets["SAVE_PIN"]:
+        st.session_state.save_pin_ok = True
+        st.success("Save PIN accepted")
+    elif save_pin == "":
+        st.session_state.save_pin_ok = False
+    else:
+        st.session_state.save_pin_ok = False
+        st.error("Incorrect Save PIN")
+
+        st.markdown("---")
+
+# ----------------------------------------------
+# 2️⃣ TRANSACTION FORM (button disabled by PIN)
+# ----------------------------------------------
 
     with st.form(
         "ledger_form",
@@ -167,8 +190,13 @@ with tab1:
         )
 
         submit = st.form_submit_button(
-            "Save Transaction"
+            "Save Transaction",
+            disabled=not st.session_state.save_pin_ok
         )
+
+# ----------------------------------------------
+# 3️⃣ VALIDATION + SAVE LOGIC
+# ----------------------------------------------
 
     if submit:
 
