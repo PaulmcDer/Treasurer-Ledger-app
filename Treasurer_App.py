@@ -32,6 +32,7 @@ client = gspread.authorize(creds)
 
 sheet = client.open_by_key(SHEET_ID).worksheet("Treasurer_Ledger")
 records = sheet.get_all_records()
+todo_sheet = client.open_by_key(SHEET_ID).worksheet("To_Do")
 
 # --------------------------------------------------
 # SESSION STATE
@@ -42,6 +43,9 @@ if "show_success" not in st.session_state:
 
 if "save_pin_ok" not in st.session_state:
     st.session_state.save_pin_ok = False
+
+if "todo_pin_ok" not in st.session_state:
+    st.session_state.todo_pin_ok = False
 
 # --------------------------------------------------
 # Calculate Note/Coins Balance
@@ -85,10 +89,11 @@ for row in records:
 # TABS
 # --------------------------------------------------
 
-tab1, tab2 = st.tabs(
+tab1, tab2, tab3 = st.tabs(
     [
         "💰 Transactions",
-        "🔒 Admin"
+        "🔒 Admin",
+        "✅ To Do"
     ]
 )
 
@@ -312,6 +317,119 @@ with tab2:
     elif admin_pin:
 
         st.error("Incorrect PIN")
+
+# --------------------------------------------------
+# TAB 3 - TO DO
+# --------------------------------------------------
+
+with tab3:
+
+    st.title("✅ Treasurer To Do List")
+
+    st.markdown("---")
+
+    st.subheader("To Do PIN")
+
+    todo_pin = st.text_input(
+        "Enter 4-digit PIN",
+        type="password",
+        max_chars=4,
+        key="todo_pin"
+    )
+
+    if todo_pin == st.secrets["SAVE_PIN"]:
+        st.session_state.todo_pin_ok = True
+        st.success("PIN accepted")
+
+    elif todo_pin == "":
+        st.session_state.todo_pin_ok = False
+
+    else:
+        st.session_state.todo_pin_ok = False
+        st.error("Incorrect PIN")
+
+    st.markdown("---")
+
+    with st.form(
+        "todo_form",
+        clear_on_submit=True
+    ):
+
+        todo_description = st.text_input(
+            "To Do Item"
+        )
+
+        add_todo = st.form_submit_button(
+            "➕ Add To Do",
+            disabled=not st.session_state.todo_pin_ok
+        )
+
+        if add_todo and todo_description.strip():
+
+            todo_sheet.append_row(
+                [
+                    datetime.now().strftime("%d/%m/%Y"),
+                    todo_description,
+                    "Pending"
+                ]
+            )
+
+            st.success(
+                "To Do item added."
+            )
+
+            st.rerun()
+
+    st.markdown("---")
+
+    if st.session_state.todo_pin_ok:
+
+        todo_records = todo_sheet.get_all_records()
+
+        if todo_records:
+
+            todo_df = pd.DataFrame(todo_records)
+
+            pending_items = todo_df[
+                todo_df["Status"] == "Pending"
+            ]
+
+            st.subheader("Pending Items")
+
+            st.dataframe(
+                pending_items,
+                use_container_width=True,
+                hide_index=True
+            )
+
+            if not pending_items.empty:
+
+                selected_item = st.selectbox(
+                    "Select Item Completed",
+                    pending_items["Description"]
+                )
+
+                complete_item = st.button(
+                    "✅ Mark Selected Item Complete"
+                )
+
+                if complete_item:
+
+                    cell = todo_sheet.find(
+                        selected_item
+                    )
+
+                    todo_sheet.update_cell(
+                        cell.row,
+                        3,
+                        "Complete"
+                    )
+
+                    st.success(
+                        "Item marked complete."
+                    )
+
+                    st.rerun()
 # --------------------------------------------------
 # FOOTER
 # --------------------------------------------------
