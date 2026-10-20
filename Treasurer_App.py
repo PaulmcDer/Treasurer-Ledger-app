@@ -103,14 +103,14 @@ tab1, tab2, tab3 = st.tabs(
 
 with tab1:
 
-    st.header("Treasurer Ledger")
+    st.subheader("Treasurer Ledger")
     st.write("Record cash, cheque, Revolut and Bank transactions.")
     st.markdown("---")
 
 # ----------------------------------------------
 # 1️⃣ SAVE TRANSACTION PIN (separate from Admin)
 # ----------------------------------------------
-    st.subheader("Save Transaction PIN")
+    st.markdown("*Save Transaction Pin*")
 
     save_pin = st.text_input(
         "Enter 4‑digit PIN",
@@ -253,7 +253,7 @@ with tab1:
 
 with tab2:
 
-    st.header("Treasurer Ledger Admin")
+    st.subheader("Treasurer Ledger Admin")
 
     st.markdown("---")
 
@@ -324,11 +324,11 @@ with tab2:
 
 with tab3:
 
-    st.header("✅ Treasurer To Do List")
+    st.subheader("✅ Treasurer To Do List")
 
     st.markdown("---")
 
-    st.subheader("To Do PIN")
+    st.markdown("*To Do - Pin*")
 
     todo_pin = st.text_input(
         "Enter 4-digit PIN",
