@@ -103,7 +103,7 @@ tab1, tab2, tab3 = st.tabs(
 
 with tab1:
 
-    st.title("Treasurer Ledger")
+    st.header("Treasurer Ledger")
     st.write("Record cash, cheque, Revolut and Bank transactions.")
     st.markdown("---")
 
@@ -253,7 +253,7 @@ with tab1:
 
 with tab2:
 
-    st.title("Treasurer Ledger Admin")
+    st.header("Treasurer Ledger Admin")
 
     st.markdown("---")
 
@@ -324,7 +324,7 @@ with tab2:
 
 with tab3:
 
-    st.title("✅ Treasurer To Do List")
+    st.header("✅ Treasurer To Do List")
 
     st.markdown("---")
 
