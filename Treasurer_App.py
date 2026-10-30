@@ -48,6 +48,91 @@ if "todo_pin_ok" not in st.session_state:
     st.session_state.todo_pin_ok = False
 
 # --------------------------------------------------
+# CSS STYLE For Buttons
+# --------------------------------------------------
+st.markdown("""
+<style>
+
+/* ===========================
+   STANDARD BUTTONS
+   =========================== */
+
+.stButton > button {
+    background-color: #FFD300 !important;
+    color: #000000 !important;
+    font-weight: bold !important;
+    border-radius: 8px !important;
+    border: 1px solid #b8860b !important;
+}
+
+.stButton > button p {
+    color: #000000 !important;
+}
+
+.stButton > button:hover {
+    background-color: #ffea00 !important;
+    color: #000000 !important;
+    transform: translateY(-1px);
+    transition: 0.2s;
+}
+/* ===========================
+   METRICS
+   =========================== */
+
+[data-testid="stMetric"] {
+    text-align: center;
+    background-color: #FFF8CC;
+    border: 1px solid #FFD700;
+    border-radius: 10px;
+    padding: 10px;
+}
+
+[data-testid="stMetric"] *,
+[data-testid="stMetricLabel"],
+[data-testid="stMetricValue"] {
+    color: #000000 !important;
+}
+
+/* ===========================
+   TABS
+   =========================== */
+
+/* All tabs */
+.stTabs [data-baseweb="tab"] {
+    min-height: 50px;
+    padding: 0 20px;
+    color: #555555 !important;
+    font-weight: 500 !important;
+    border-radius: 8px 8px 0 0;
+}
+
+/* Hover */
+.stTabs [data-baseweb="tab"]:hover {
+    color: #000000 !important;
+}
+
+/* ACTIVE TAB */
+.stTabs [aria-selected="true"] {
+    color: #B8860B !important;      /* Dark gold text */
+    font-weight: 800 !important;
+}
+
+/* Active tab text */
+.stTabs [aria-selected="true"] p {
+    color: #B8860B !important;
+    font-weight: 800 !important;
+}
+
+/* Yellow underline */
+.stTabs [data-baseweb="tab-highlight"] {
+    background-color: #FFD300 !important;
+    height: 4px !important;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+# --------------------------------------------------
 # Calculate Note/Coins Balance
 # --------------------------------------------------
 
