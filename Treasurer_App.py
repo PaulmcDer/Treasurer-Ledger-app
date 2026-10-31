@@ -22,17 +22,41 @@ scope = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
 ]
+@st.cache_resource
+def get_sheets():
 
-creds = Credentials.from_service_account_info(
-    st.secrets["gcp_service_account"],
-    scopes=scope
-)
+    creds = Credentials.from_service_account_info(
+        st.secrets["gcp_service_account"],
+        scopes=scope
+    )
 
-client = gspread.authorize(creds)
+    client = gspread.authorize(creds)
 
-sheet = client.open_by_key(SHEET_ID).worksheet("Treasurer_Ledger")
-records = sheet.get_all_records()
-todo_sheet = client.open_by_key(SHEET_ID).worksheet("To_Do")
+    return {
+        "ledger": client.open_by_key(SHEET_ID).worksheet("Treasurer_Ledger"),
+        "todo": client.open_by_key(SHEET_ID).worksheet("To_Do"),
+        "fifty": client.open_by_key(SHEET_ID).worksheet("50-50")
+    }
+
+sheets = get_sheets()
+
+sheet = sheets["ledger"]
+todo_sheet = sheets["todo"]
+fifty_sheet = sheets["fifty"]
+
+@st.cache_data(ttl=30)
+def load_ledger_data():
+    return sheet.get_all_records()
+
+
+@st.cache_data(ttl=30)
+def load_todo_data():
+    return todo_sheet.get_all_records()
+
+
+@st.cache_data(ttl=30)
+def load_fifty_data():
+    return fifty_sheet.get_all_records()
 
 # --------------------------------------------------
 # SESSION STATE
@@ -139,6 +163,9 @@ st.markdown("""
 notes_balance = 0.0
 coins_balance = 0.0
 
+# Fetch data here 
+records = load_ledger_data()
+
 for row in records:
 
     method = row["Method"]
@@ -174,11 +201,12 @@ for row in records:
 # TABS
 # --------------------------------------------------
 
-tab1, tab2, tab3 = st.tabs(
+tab1, tab2, tab3, tab4 = st.tabs(
     [
         "💰 Transactions",
         "🔒 Admin",
-        "✅ To Do"
+        "✅ To Do",
+        "🏆 50-50 Payments"
     ]
 )
 
@@ -321,6 +349,7 @@ with tab1:
                 ]
             )
 
+            st.cache_data.clear()
             st.session_state.show_success = True
             st.rerun()
 
@@ -370,8 +399,6 @@ with tab2:
                 "Total Cash",
                 f"€{notes_balance + coins_balance:,.2f}"
             )
-
-        records = sheet.get_all_records()
 
         df = pd.DataFrame(records)
 
@@ -458,6 +485,7 @@ with tab3:
                     "Pending"
                 ]
             )
+            st.cache_data.clear()
 
             st.success(
                 "To Do item added."
@@ -469,7 +497,7 @@ with tab3:
 
     if st.session_state.todo_pin_ok:
 
-        todo_records = todo_sheet.get_all_records()
+        todo_records = load_todo_data()
 
         if todo_records:
 
@@ -510,12 +538,96 @@ with tab3:
                         "Complete"
                     )
 
+                    st.cache_data.clear()
+
                     st.success(
                         "Item marked complete."
                     )
 
                     st.rerun()
+
 # --------------------------------------------------
+# TAB 4 - 50-50 PAYMENTS
+# --------------------------------------------------
+
+with tab4:
+
+    st.subheader("🏆 50-50 Payments")
+
+    payment_records = load_fifty_data()
+
+    if not payment_records:
+
+        st.info("No payment records found.")
+
+    else:
+
+        payment_df = pd.DataFrame(payment_records)
+
+        pending_df = payment_df[
+            payment_df["Status"]
+            .astype(str)
+            .str.strip()
+            .eq("Pending")
+        ]
+
+        st.subheader("Pending Payments")
+
+        if pending_df.empty:
+
+            st.success("No pending payments.")
+
+        else:
+
+            st.dataframe(
+                pending_df,
+                use_container_width=True,
+                hide_index=True
+            )
+
+            payment_options = [
+                f"{row['Winner Name']} | €{row['Jackpot €']} | {row['Ticket Number']}"
+                for _, row in pending_df.iterrows()
+            ]
+
+            selected_payment = st.selectbox(
+                "Select Payment",
+                payment_options
+            )
+
+            if st.button(
+                "✅ Mark Payment Complete",
+                key="complete_5050_payment"
+            ):
+
+                selected_index = payment_options.index(
+                    selected_payment
+                )
+
+                selected_row = pending_df.iloc[
+                    selected_index
+                ]
+
+                sheet_row = (
+                    pending_df.index[selected_index]
+                    + 2
+                )
+
+                fifty_sheet.update_cell(
+                    sheet_row,
+                    6,
+                    "Complete"
+                )
+
+                st.cache_data.clear()
+
+                st.success(
+                    "Payment marked as complete."
+                )
+
+                st.rerun()
+                
+#---------------------------------------------------
 # FOOTER
 # --------------------------------------------------
 
