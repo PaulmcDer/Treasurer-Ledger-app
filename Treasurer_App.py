@@ -201,12 +201,13 @@ for row in records:
 # TABS
 # --------------------------------------------------
 
-tab1, tab2, tab3, tab4 = st.tabs(
+tab1, tab2, tab3, tab4, tab5 = st.tabs(
     [
         "💰 Transactions",
         "🔒 Admin",
         "✅ To Do",
-        "🏆 50-50 Payments"
+        "🏆 50-50 Payments",
+        "🛠 Worksheet Maintenance"
     ]
 )
 
@@ -372,7 +373,7 @@ with tab2:
     st.markdown("---")
 
     admin_pin = st.text_input(
-        "Admin PIN",
+        "6-Digit Admin PIN",
         type="password"
     )
 
@@ -627,6 +628,115 @@ with tab4:
 
                 st.rerun()
                 
+# ==========================================
+# # TAB 5 - MAINTENANCE
+# ==========================================
+
+with tab5:
+    st.subheader("🛠️ Worksheet Maintenance")
+    
+    # 1. PIN Security Check Section
+    st.markdown("**\*Maintenance Access - Pin\***")
+    maint_pin = st.text_input(
+        "Enter 4-digit PIN",
+        type="password",
+        max_chars=4,
+        key="maint_pin"
+    )
+
+    # Initialize a session state key for this tab's security check if not already present
+    if "maint_pin_ok" not in st.session_state:
+        st.session_state.maint_pin_ok = False
+
+    # Validate the PIN against your existing SAVE_PIN secret
+    if maint_pin == st.secrets["SAVE_PIN"]:
+        st.session_state.maint_pin_ok = True
+        st.success("PIN accepted. Access granted.")
+    elif maint_pin == "":
+        st.session_state.maint_pin_ok = False
+    else:
+        st.session_state.maint_pin_ok = False
+        st.error("Incorrect PIN")
+
+    st.markdown("---")
+
+    # 2. Main Tools: Only visible if PIN is confirmed correct
+    if st.session_state.maint_pin_ok:
+        
+        # Dropdown selection now including all 3 sheets
+        maintenance_target = st.selectbox(
+            "Select Sheet to Manage:",
+            options=["Treasurer Ledger", "To Do List", "50-50 Payments"],
+            key="maintenance_sheet_select"
+        )
+
+        # 3. Assign target variables and dynamic caching clearing based on the 3 selections
+        if maintenance_target == "Treasurer Ledger":
+            target_sheet = sheet                 # Maps to your ledger variable from your setup
+            records = load_ledger_data()         # Maps to your ledger caching function
+            cache_clear_func = load_ledger_data.clear
+        elif maintenance_target == "To Do List":
+            target_sheet = todo_sheet
+            records = load_todo_data()
+            cache_clear_func = load_todo_data.clear
+        else:
+            target_sheet = fifty_sheet
+            records = load_fifty_data()
+            cache_clear_func = load_fifty_data.clear
+
+        # Display data if it exists
+        if not records:
+            st.info(f"The '{maintenance_target}' sheet contains no entries.")
+        else:
+            maintenance_df = pd.DataFrame(records)
+            
+            st.write("### Current Data View")
+            st.dataframe(maintenance_df, use_container_width=True, hide_index=True)
+
+            st.divider()
+            st.subheader("🚨 Danger Zone")
+
+            # Preview the last entry row safely
+            last_row_num = len(records) + 1
+            last_entry = records[-1]
+
+            # 1. Display sticky success message if a deletion just happened
+            if "deletion_success_msg" in st.session_state and st.session_state.deletion_success_msg:
+                st.success(st.session_state.deletion_success_msg)
+                # Clear the message flag so it doesn't show up again on the next normal interaction
+                st.session_state.deletion_success_msg = None
+
+            st.error(f"⚠️ **Attention:** The action below will permanently delete row **#{last_row_num}** from **{maintenance_target}**.")
+            st.write("**Preview of item to be deleted:**")
+            st.json(last_entry)
+
+            # 2. Safety Lock Checkbox
+            confirm_delete = st.checkbox(
+                f"I am sure I want to permanently delete this row from {maintenance_target}.", 
+                key="confirm_delete_checkbox"
+            )
+
+            # 3. Delete Action (Button is disabled unless checkbox is checked)
+            if st.button(
+                f"🗑️ Confirm: Delete Most Recent Entry", 
+                key="btn_delete_most_recent", 
+                disabled=not confirm_delete
+            ):
+                with st.spinner("Deleting row from Google Sheets..."):
+                    try:
+                        target_sheet.delete_rows(last_row_num)
+                        
+                        # Clear cache immediately so the table updates accurately
+                        cache_clear_func()
+                        
+                        # Store the success message in session state so it survives the st.rerun()
+                        st.session_state.deletion_success_msg = f"✅ Successfully deleted row #{last_row_num} from {maintenance_target}!"
+                        st.rerun()
+                        
+                    except Exception as e:
+                        st.error(f"An error occurred while deleting the row: {e}")
+
+
 #---------------------------------------------------
 # FOOTER
 # --------------------------------------------------
