@@ -18,28 +18,24 @@ st.set_page_config(
 # --------------------------------------------------
 # GOOGLE SHEETS CONNECTION
 # --------------------------------------------------
-scope = [
-    "https://www.googleapis.com/auth/spreadsheets",
-    "https://www.googleapis.com/auth/drive"
-]
+SHEETS_SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
+
 @st.cache_resource
 def get_sheets():
-
-    creds = Credentials.from_service_account_info(
+    credentials = Credentials.from_service_account_info(
         st.secrets["gcp_service_account"],
-        scopes=scope
+        scopes=SHEETS_SCOPES,
     )
-
-    client = gspread.authorize(creds)
+    client = gspread.authorize(credentials)
+    spreadsheet = client.open_by_key(SHEET_ID)
 
     return {
-        "ledger": client.open_by_key(SHEET_ID).worksheet("Treasurer_Ledger"),
-        "todo": client.open_by_key(SHEET_ID).worksheet("To_Do"),
-        "fifty": client.open_by_key(SHEET_ID).worksheet("50-50")
+        "ledger": spreadsheet.worksheet("Treasurer_Ledger"),
+        "todo": spreadsheet.worksheet("To_Do"),
+        "fifty": spreadsheet.worksheet("50-50"),
     }
 
 sheets = get_sheets()
-
 sheet = sheets["ledger"]
 todo_sheet = sheets["todo"]
 fifty_sheet = sheets["fifty"]
