@@ -13,7 +13,7 @@ SHEET_ID = "1umG0zNs4Uz9IqfZXPXEeAgfSWoRTzDDsEwlSRC-3PnM"
 st.set_page_config(
     page_title="Treasurer Ledger",
     page_icon="💰",
-    layout="centered"
+    layout="wide"
 )
 # --------------------------------------------------
 # GOOGLE SHEETS CONNECTION
@@ -68,89 +68,265 @@ if "todo_pin_ok" not in st.session_state:
     st.session_state.todo_pin_ok = False
 
 # --------------------------------------------------
-# CSS STYLE For Buttons
+# APP STYLING
 # --------------------------------------------------
 st.markdown("""
 <style>
+    :root {
+        --ledger-ink: #172a25;
+        --ledger-muted: #65756e;
+        --ledger-green: #174b3a;
+        --ledger-gold: #e7b84b;
+        --ledger-border: #e3e9e4;
+        --ledger-surface: #ffffff;
+    }
 
-/* ===========================
-   STANDARD BUTTONS
-   =========================== */
+    .stApp {
+        background:
+            radial-gradient(ellipse at 10% 0%, rgba(231, 184, 75, 0.09), transparent 34rem),
+            #f5f7f4;
+        color: var(--ledger-ink);
+    }
 
-.stButton > button {
-    background-color: #FFD300 !important;
-    color: #000000 !important;
-    font-weight: bold !important;
-    border-radius: 8px !important;
-    border: 1px solid #b8860b !important;
-}
+    [data-testid="stHeader"] {
+        background: transparent;
+    }
 
-.stButton > button p {
-    color: #000000 !important;
-}
+    [data-testid="stMainBlockContainer"] {
+        max-width: 1440px;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
 
-.stButton > button:hover {
-    background-color: #ffea00 !important;
-    color: #000000 !important;
-    transform: translateY(-1px);
-    transition: 0.2s;
-}
-/* ===========================
-   METRICS
-   =========================== */
+    .ledger-hero {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1.5rem;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+        padding: clamp(1.5rem, 4vw, 2.5rem);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 22px;
+        background: linear-gradient(118deg, #123d31 0%, #1d5b44 72%, #286b4d 100%);
+        box-shadow: 0 18px 40px rgba(23, 58, 44, 0.14);
+        color: #ffffff;
+    }
 
-[data-testid="stMetric"] {
-    text-align: center;
-    background-color: #FFF8CC;
-    border: 1px solid #FFD700;
-    border-radius: 10px;
-    padding: 10px;
-}
+    .ledger-hero::after {
+        position: absolute;
+        top: -6rem;
+        right: 12%;
+        width: 18rem;
+        height: 18rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        box-shadow: 0 0 0 2.5rem rgba(255, 255, 255, 0.035),
+                    0 0 0 5rem rgba(255, 255, 255, 0.025);
+        content: "";
+        pointer-events: none;
+    }
 
-[data-testid="stMetric"] *,
-[data-testid="stMetricLabel"],
-[data-testid="stMetricValue"] {
-    color: #000000 !important;
-}
+    .ledger-kicker {
+        margin: 0 0 0.55rem;
+        color: #f0cc75;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+    }
 
-/* ===========================
-   TABS
-   =========================== */
+    .ledger-hero h1 {
+        margin: 0;
+        color: #ffffff;
+        font-size: clamp(1.9rem, 4vw, 2.7rem);
+        font-weight: 750;
+        letter-spacing: -0.045em;
+        line-height: 1.1;
+    }
 
-/* All tabs */
-.stTabs [data-baseweb="tab"] {
-    min-height: 50px;
-    padding: 0 20px;
-    color: #555555 !important;
-    font-weight: 500 !important;
-    border-radius: 8px 8px 0 0;
-}
+    .ledger-hero p {
+        margin: 0.65rem 0 0;
+        color: rgba(255, 255, 255, 0.78);
+        font-size: 0.98rem;
+    }
 
-/* Hover */
-.stTabs [data-baseweb="tab"]:hover {
-    color: #000000 !important;
-}
+    .ledger-date {
+        z-index: 1;
+        flex: 0 0 auto;
+        padding: 0.8rem 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 14px;
+        background: rgba(8, 35, 26, 0.2);
+        color: #ffffff;
+        font-size: 0.88rem;
+        font-weight: 650;
+        text-align: center;
+    }
 
-/* ACTIVE TAB */
-.stTabs [aria-selected="true"] {
-    color: #B8860B !important;      /* Dark gold text */
-    font-weight: 800 !important;
-}
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 0.45rem;
+        border-bottom: 1px solid var(--ledger-border);
+    }
 
-/* Active tab text */
-.stTabs [aria-selected="true"] p {
-    color: #B8860B !important;
-    font-weight: 800 !important;
-}
+    .stTabs [data-baseweb="tab"] {
+        min-height: 3.2rem;
+        padding: 0 1rem;
+        border-radius: 12px 12px 0 0;
+        color: var(--ledger-muted);
+        font-weight: 650;
+        transition: color 160ms ease, background 160ms ease;
+    }
 
-/* Yellow underline */
-.stTabs [data-baseweb="tab-highlight"] {
-    background-color: #FFD300 !important;
-    height: 4px !important;
-}
+    .stTabs [data-baseweb="tab"]:hover {
+        color: var(--ledger-green);
+        background: rgba(23, 75, 58, 0.05);
+    }
 
+    .stTabs [aria-selected="true"],
+    .stTabs [aria-selected="true"] p {
+        color: var(--ledger-green) !important;
+        font-weight: 750 !important;
+    }
+
+    .stTabs [data-baseweb="tab-highlight"] {
+        height: 3px;
+        background: var(--ledger-gold);
+    }
+
+    .stTabs [data-baseweb="tab-panel"] {
+        padding-top: 1.4rem;
+    }
+
+    [data-testid="stForm"],
+    [data-testid="stMetric"],
+    [data-testid="stDataFrame"] {
+        border: 1px solid var(--ledger-border);
+        border-radius: 16px;
+        background: var(--ledger-surface);
+        box-shadow: 0 5px 18px rgba(23, 42, 37, 0.045);
+    }
+
+    [data-testid="stForm"] {
+        padding: 1.2rem 1.35rem;
+    }
+
+    [data-testid="stMetric"] {
+        padding: 1rem 1.1rem;
+    }
+
+    [data-testid="stMetricLabel"] {
+        color: var(--ledger-muted) !important;
+        font-weight: 650;
+    }
+
+    [data-testid="stMetricValue"] {
+        color: var(--ledger-green) !important;
+        font-weight: 750;
+    }
+
+    .stButton > button,
+    [data-testid="stFormSubmitButton"] > button {
+        min-height: 2.75rem;
+        border: 1px solid #174b3a !important;
+        border-radius: 10px !important;
+        background: #174b3a !important;
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+    }
+
+    .stButton > button p,
+    [data-testid="stFormSubmitButton"] > button p {
+        color: #ffffff !important;
+        font-weight: 700 !important;
+    }
+
+    .stButton > button:hover:not(:disabled),
+    [data-testid="stFormSubmitButton"] > button:hover:not(:disabled) {
+        transform: translateY(-1px);
+        border-color: #286b4d !important;
+        background: #286b4d !important;
+        box-shadow: 0 6px 14px rgba(23, 75, 58, 0.18);
+    }
+
+    .stButton > button:disabled,
+    [data-testid="stFormSubmitButton"] > button:disabled {
+        border-color: #c9d2cc !important;
+        background: #e5e9e6 !important;
+        color: #748078 !important;
+    }
+
+    .stButton > button:focus-visible,
+    [data-testid="stFormSubmitButton"] > button:focus-visible,
+    [data-baseweb="tab"]:focus-visible {
+        outline: 3px solid rgba(231, 184, 75, 0.7);
+        outline-offset: 2px;
+    }
+
+    [data-testid="stTextInput"] input,
+    [data-testid="stNumberInput"] input,
+    [data-testid="stTextArea"] textarea,
+    [data-testid="stSelectbox"] [data-baseweb="select"] > div {
+        border-color: #d7dfd9;
+        border-radius: 9px;
+        background: #ffffff;
+    }
+
+    [data-testid="stTextInput"] input:focus,
+    [data-testid="stNumberInput"] input:focus,
+    [data-testid="stTextArea"] textarea:focus {
+        border-color: #287353;
+        box-shadow: 0 0 0 2px rgba(40, 115, 83, 0.14);
+    }
+
+    [data-testid="stAlert"] {
+        border-radius: 12px;
+    }
+
+    @media (max-width: 700px) {
+        [data-testid="stMainBlockContainer"] {
+            padding: 1rem 1rem 1.5rem;
+        }
+
+        .ledger-hero {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 1rem;
+            border-radius: 17px;
+        }
+
+        .ledger-date {
+            text-align: left;
+        }
+
+        .stTabs [data-baseweb="tab"] {
+            min-height: 2.8rem;
+            padding: 0 0.6rem;
+            font-size: 0.82rem;
+        }
+
+        [data-testid="stForm"] {
+            padding: 0.9rem;
+        }
+    }
 </style>
 """, unsafe_allow_html=True)
+
+st.markdown(
+    f"""
+    <header class="ledger-hero">
+        <div>
+            <div class="ledger-kicker">Ballymore · Treasurer's office</div>
+            <h1>Payments &amp; Ledger</h1>
+            <p>A clear daily record of club payments, cash and follow-ups.</p>
+        </div>
+        <div class="ledger-date">Today<br>{datetime.now().strftime("%A, %d %B %Y")}</div>
+    </header>
+    """,
+    unsafe_allow_html=True,
+)
 
 # --------------------------------------------------
 # Calculate Note/Coins Balance
@@ -213,14 +389,14 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs(
 
 with tab1:
 
-    st.subheader("Treasurer Ledger")
-    st.write("Record cash, cheque, Revolut and Bank transactions.")
-    st.markdown("---")
+    st.subheader("Record a transaction")
+    st.caption("Add today's income, payment or lodgement to the club ledger.")
 
 # ----------------------------------------------
 # 1️⃣ SAVE TRANSACTION PIN (separate from Admin)
 # ----------------------------------------------
-    st.markdown("*Save Transaction Pin*")
+    st.markdown("#### Unlock transaction entry")
+    st.caption("Enter your transaction PIN to enable saving.")
 
     save_pin = st.text_input(
         "Enter 4‑digit PIN",
@@ -237,8 +413,6 @@ with tab1:
         st.session_state.save_pin_ok = False
         st.error("Incorrect Save PIN")
 
-        st.markdown("---")
-
 # ----------------------------------------------
 # 2️⃣ TRANSACTION FORM (button disabled by PIN)
 # ----------------------------------------------
@@ -248,64 +422,67 @@ with tab1:
         clear_on_submit=True
     ):
 
-        name = st.text_input(
-            "Name / Payee"
-        )
+        identity_col, category_col = st.columns([1.25, 1])
+        with identity_col:
+            name = st.text_input("Name / Payee")
+        with category_col:
+            category = st.selectbox(
+                "Category",
+                [
+                    "Supporters Draw",
+                    "50/50 Draw",
+                    "Physio",
+                    "Membership",
+                    "Equipment",
+                    "Club Shop",
+                    "Lodgement",
+                    "Sponsorship",
+                    "Other"
+                ]
+            )
 
-        category = st.selectbox(
-            "Category",
-            [
-                "Supporters Draw",
-                "50/50 Draw",
-                "Physio",
-                "Membership",
-                "Equipment",
-                "Club Shop",
-                "Lodgement",
-                "Sponsorship",
-                "Other"
-            ]
-        )
+        type_col, method_col = st.columns(2)
+        with type_col:
+            transaction_type = st.selectbox(
+                "Transaction Type",
+                [
+                    "Money In",
+                    "Money Out",
+                    "Lodgement",
+                    "Withdrawel"
+                ]
+            )
+        with method_col:
+            method = st.selectbox(
+                "Method",
+                [
+                    "Cash Notes",
+                    "Cash Coins",
+                    "Revolut",
+                    "BOI",
+                    "Cheque",
+                    "Credit Union"
+                ]
+            )
 
-        transaction_type = st.selectbox(
-            "Transaction Type",
-            [
-                "Money In",
-                "Money Out",
-                "Lodgement",
-                "Withdrawel"
-            ]
-        )
-
-        method = st.selectbox(
-            "Method",
-            [
-                "Cash Notes",
-                "Cash Coins",
-                "Revolut",
-                "BOI",
-                "Cheque",
-                "Credit Union"
-            ]
-        )
-
-        amount = st.number_input(
-            "Amount (€)",
-            min_value=0.0,
-            step=0.01,
-            format="%.2f"
-        )
-
-        cheque_number = st.text_input(
-            "Cheque Number (Optional)"
-        )
+        amount_col, cheque_col = st.columns(2)
+        with amount_col:
+            amount = st.number_input(
+                "Amount (€)",
+                min_value=0.0,
+                step=0.01,
+                format="%.2f"
+            )
+        with cheque_col:
+            cheque_number = st.text_input("Cheque Number (Optional)")
 
         comments = st.text_area(
-            "Comments"
+            "Notes (Optional)",
+            placeholder="Add a reference or a short note for this entry."
         )
 
         submit = st.form_submit_button(
-            "Save Transaction",
+            "Save transaction",
             disabled=not st.session_state.save_pin_ok
         )
 
@@ -632,7 +809,7 @@ with tab5:
     st.subheader("🛠️ Worksheet Maintenance")
     
     # 1. PIN Security Check Section
-    st.markdown("**\*Maintenance Access - Pin\***")
+    st.markdown("**Maintenance access PIN**")
     maint_pin = st.text_input(
         "Enter 4-digit PIN",
         type="password",
