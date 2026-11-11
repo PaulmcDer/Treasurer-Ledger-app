@@ -13,7 +13,7 @@ SHEET_ID = "1umG0zNs4Uz9IqfZXPXEeAgfSWoRTzDDsEwlSRC-3PnM"
 st.set_page_config(
     page_title="Treasurer Ledger",
     page_icon="💰",
-    layout="wide"
+    layout="centered"
 )
 # --------------------------------------------------
 # GOOGLE SHEETS CONNECTION
@@ -93,7 +93,7 @@ st.markdown("""
     }
 
     [data-testid="stMainBlockContainer"] {
-        max-width: 1440px;
+        max-width: 960px;
         padding-top: 2rem;
         padding-bottom: 2rem;
     }
@@ -103,14 +103,14 @@ st.markdown("""
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 1.5rem;
+        gap: 1rem;
         overflow: hidden;
-        margin-bottom: 1.5rem;
-        padding: clamp(1.5rem, 4vw, 2.5rem);
+        margin-bottom: 0.6rem;
+        padding: 1.25rem 1.5rem;
         border: 1px solid rgba(255, 255, 255, 0.14);
         border-radius: 22px;
         background: linear-gradient(118deg, #123d31 0%, #1d5b44 72%, #286b4d 100%);
-        box-shadow: 0 18px 40px rgba(23, 58, 44, 0.14);
+        box-shadow: 0 8px 24px rgba(23, 58, 44, 0.10);
         color: #ffffff;
     }
 
@@ -140,7 +140,7 @@ st.markdown("""
     .ledger-hero h1 {
         margin: 0;
         color: #ffffff;
-        font-size: clamp(1.9rem, 4vw, 2.7rem);
+        font-size: clamp(1.6rem, 4vw, 2rem);
         font-weight: 750;
         letter-spacing: -0.045em;
         line-height: 1.1;
@@ -148,8 +148,8 @@ st.markdown("""
 
     .ledger-hero p {
         margin: 0.65rem 0 0;
-        color: rgba(255, 255, 255, 0.78);
-        font-size: 0.98rem;
+        color: #e0ece5;
+        font-size: 0.9rem;
     }
 
     .ledger-date {
@@ -166,14 +166,18 @@ st.markdown("""
     }
 
     .stTabs [data-baseweb="tab-list"] {
-        gap: 0.45rem;
-        border-bottom: 1px solid var(--ledger-border);
+        gap: 0.2rem;
+        padding: 0.3rem;
+        border: 1px solid var(--ledger-border);
+        border-radius: 14px;
+        background: #ffffff;
     }
 
     .stTabs [data-baseweb="tab"] {
         min-height: 3.2rem;
+        flex: 1 1 0;
         padding: 0 1rem;
-        border-radius: 12px 12px 0 0;
+        border-radius: 10px;
         color: var(--ledger-muted);
         font-weight: 650;
         transition: color 160ms ease, background 160ms ease;
@@ -190,9 +194,17 @@ st.markdown("""
         font-weight: 750 !important;
     }
 
+    .stTabs [data-baseweb="tab"][aria-selected="true"] {
+        background: #edf4ee;
+        box-shadow: inset 0 -3px 0 var(--ledger-gold);
+    }
+
     .stTabs [data-baseweb="tab-highlight"] {
-        height: 3px;
-        background: var(--ledger-gold);
+        display: none;
+    }
+
+    .stTabs [data-baseweb="tab-border"] {
+        display: none;
     }
 
     .stTabs [data-baseweb="tab-panel"] {
@@ -258,6 +270,11 @@ st.markdown("""
         color: #748078 !important;
     }
 
+    .stButton > button:disabled p,
+    [data-testid="stFormSubmitButton"] > button:disabled p {
+        color: #526057 !important;
+    }
+
     .stButton > button:focus-visible,
     [data-testid="stFormSubmitButton"] > button:focus-visible,
     [data-baseweb="tab"]:focus-visible {
@@ -285,6 +302,23 @@ st.markdown("""
         border-radius: 12px;
     }
 
+    .ledger-footer {
+        padding: 0.25rem 0 0.75rem;
+        color: var(--ledger-muted);
+        font-size: 0.8rem;
+        letter-spacing: 0.025em;
+        text-align: center;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .stButton > button,
+        [data-testid="stFormSubmitButton"] > button,
+        .stTabs [data-baseweb="tab"] {
+            transition: none;
+            transform: none !important;
+        }
+    }
+
     @media (max-width: 700px) {
         [data-testid="stMainBlockContainer"] {
             padding: 1rem 1rem 1.5rem;
@@ -293,18 +327,29 @@ st.markdown("""
         .ledger-hero {
             align-items: flex-start;
             flex-direction: column;
-            gap: 1rem;
+            gap: 0.65rem;
+            padding: 1rem 1.1rem;
             border-radius: 17px;
         }
 
         .ledger-date {
+            padding: 0;
+            border: 0;
+            background: transparent;
+            font-size: 0.8rem;
             text-align: left;
         }
 
         .stTabs [data-baseweb="tab"] {
-            min-height: 2.8rem;
-            padding: 0 0.6rem;
+            min-height: 2.9rem;
+            padding: 0 0.35rem;
             font-size: 0.82rem;
+        }
+
+        [data-testid="stTextInput"] input,
+        [data-testid="stNumberInput"] input,
+        [data-testid="stTextArea"] textarea {
+            font-size: 16px;
         }
 
         [data-testid="stForm"] {
@@ -314,18 +359,17 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown(
+st.html(
     f"""
     <header class="ledger-hero">
         <div>
-            <div class="ledger-kicker">Ballymore · Treasurer's office</div>
-            <h1>Payments &amp; Ledger</h1>
-            <p>A clear daily record of club payments, cash and follow-ups.</p>
+            <div class="ledger-kicker">Ballymore · Treasurer</div>
+            <h1>Treasurer ledger</h1>
+            <p>Payments, cash and everyday follow-ups.</p>
         </div>
-        <div class="ledger-date">Today<br>{datetime.now().strftime("%A, %d %B %Y")}</div>
+        <div class="ledger-date">{datetime.now().strftime('%a, %d %b %Y')}</div>
     </header>
-    """,
-    unsafe_allow_html=True,
+    """
 )
 
 # --------------------------------------------------
@@ -373,13 +417,13 @@ for row in records:
 # TABS
 # --------------------------------------------------
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs(
+tab1, tab3, tab4, tab2, tab5 = st.tabs(
     [
-        "💰 Transactions",
-        "🔒 Admin",
-        "✅ To Do",
-        "🏆 50-50 Payments",
-        "🛠 Worksheet Maintenance"
+        "Entry",
+        "Tasks",
+        "50/50",
+        "Ledger",
+        "Tools"
     ]
 )
 
@@ -465,25 +509,25 @@ with tab1:
                 ]
             )
 
-        amount_col, cheque_col = st.columns(2)
-        with amount_col:
-            amount = st.number_input(
-                "Amount (€)",
-                min_value=0.0,
-                step=0.01,
-                format="%.2f"
-            )
-        with cheque_col:
+        amount = st.number_input(
+            "Amount (€)",
+            min_value=0.0,
+            step=0.01,
+            format="%.2f"
+        )
+
+        with st.expander("Add a note or cheque number"):
             cheque_number = st.text_input("Cheque Number (Optional)")
 
-        comments = st.text_area(
-            "Notes (Optional)",
-            placeholder="Add a reference or a short note for this entry."
-        )
+            comments = st.text_area(
+                "Notes (Optional)",
+                placeholder="Add a reference or a short note for this entry."
+            )
 
         submit = st.form_submit_button(
             "Save transaction",
-            disabled=not st.session_state.save_pin_ok
+            disabled=not st.session_state.save_pin_ok,
+            width="stretch"
         )
 
 # ----------------------------------------------
@@ -596,7 +640,7 @@ with tab2:
 
         st.dataframe(
             df,
-            use_container_width=True,
+            width="stretch",
             hide_index=True
         )
 
@@ -610,7 +654,11 @@ with tab2:
 
 with tab3:
 
-    st.subheader("✅ Treasurer To Do List")
+    st.subheader("Tasks")
+    st.caption("Add a quick reminder, then mark it complete when it's done.")
+
+    if st.session_state.get("task_success"):
+        st.success(st.session_state.pop("task_success"))
 
     st.markdown("---")
 
@@ -642,12 +690,14 @@ with tab3:
     ):
 
         todo_description = st.text_input(
-            "To Do Item"
+            "What needs doing?",
+            placeholder="e.g. Lodge the weekend's cash"
         )
 
         add_todo = st.form_submit_button(
-            "➕ Add To Do",
-            disabled=not st.session_state.todo_pin_ok
+            "Add task",
+            disabled=not st.session_state.todo_pin_ok,
+            width="stretch"
         )
 
         if add_todo and todo_description.strip():
@@ -661,11 +711,11 @@ with tab3:
             )
             st.cache_data.clear()
 
-            st.success(
-                "To Do item added."
-            )
-
+            st.session_state.task_success = "Task added."
             st.rerun()
+
+        elif add_todo:
+            st.error("Enter a task before saving.")
 
     st.markdown("---")
 
@@ -681,44 +731,26 @@ with tab3:
                 todo_df["Status"] == "Pending"
             ]
 
-            st.subheader("Pending Items")
+            st.subheader(f"Pending tasks · {len(pending_items)}")
 
-            st.dataframe(
-                pending_items,
-                use_container_width=True,
-                hide_index=True
-            )
+            if pending_items.empty:
+                st.success("All caught up. No pending tasks.")
 
-            if not pending_items.empty:
-
-                selected_item = st.selectbox(
-                    "Select Item Completed",
-                    pending_items["Description"]
-                )
-
-                complete_item = st.button(
-                    "✅ Mark Selected Item Complete"
-                )
-
-                if complete_item:
-
-                    cell = todo_sheet.find(
-                        selected_item
-                    )
-
-                    todo_sheet.update_cell(
-                        cell.row,
-                        3,
-                        "Complete"
-                    )
-
-                    st.cache_data.clear()
-
-                    st.success(
-                        "Item marked complete."
-                    )
-
-                    st.rerun()
+            for row_index, task in pending_items.iterrows():
+                with st.container(border=True):
+                    st.text(str(task["Description"]))
+                    if st.button(
+                        "Mark complete",
+                        key=f"complete_task_{row_index}",
+                        icon=":material/check:",
+                        width="stretch",
+                    ):
+                        todo_sheet.update_cell(int(row_index) + 2, 3, "Complete")
+                        load_todo_data.clear()
+                        st.session_state.task_success = "Task completed."
+                        st.rerun()
+        else:
+            st.info("No tasks yet. Add your first reminder above.")
 
 # --------------------------------------------------
 # TAB 4 - 50-50 PAYMENTS
@@ -755,7 +787,7 @@ with tab4:
 
             st.dataframe(
                 pending_df,
-                use_container_width=True,
+                width="stretch",
                 hide_index=True
             )
 
@@ -771,7 +803,8 @@ with tab4:
 
             if st.button(
                 "✅ Mark Payment Complete",
-                key="complete_5050_payment"
+                key="complete_5050_payment",
+                width="stretch"
             ):
 
                 selected_index = payment_options.index(
@@ -864,7 +897,7 @@ with tab5:
             maintenance_df = pd.DataFrame(records)
             
             st.write("### Current Data View")
-            st.dataframe(maintenance_df, use_container_width=True, hide_index=True)
+            st.dataframe(maintenance_df, width="stretch", hide_index=True)
 
             st.divider()
             st.subheader("🚨 Danger Zone")
@@ -916,6 +949,4 @@ with tab5:
 
 st.markdown("---")
 
-st.caption(
-    "Ballymore Treasurer Ledger"
-)
+st.html('<footer class="ledger-footer">Ballymore · Treasurer ledger</footer>')
