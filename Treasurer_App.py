@@ -417,13 +417,14 @@ for row in records:
 # TABS
 # --------------------------------------------------
 
-tab1, tab3, tab4, tab2, tab5 = st.tabs(
+tab1, tab3, tab4, tab2, tab5, tab6 = st.tabs(
     [
-        "Entry",
-        "Tasks",
-        "50/50",
-        "Ledger",
-        "Tools"
+        "🎫 Entry",
+        "✅ To Do",
+        "💰 50/50",
+        "📖 Ledger",
+        "🔧 Tools",
+        "📥 Download"
     ]
 )
 
@@ -941,6 +942,81 @@ with tab5:
                         
                     except Exception as e:
                         st.error(f"An error occurred while deleting the row: {e}")
+
+with tab6:
+    st.subheader("Export Accounts (Excel)")
+    st.caption("Download the Ledger for a financial year (1 October to 30 September).")
+
+    from io import BytesIO
+
+    export_pin = st.text_input(
+        "Enter Admin PIN",
+        type="password",
+        key="export_pin"
+    )
+
+    if export_pin and export_pin == st.secrets["ADMIN_PIN"]:
+
+        export_records = load_ledger_data()
+
+        if not export_records:
+            st.info("The ledger contains no entries.")
+        else:
+            export_df = pd.DataFrame(export_records)
+            date_col = export_df.columns[0]
+            export_df["_parsed"] = pd.to_datetime(
+                export_df[date_col],
+                format="%d/%m/%Y %H:%M",
+                errors="coerce"
+            )
+
+            current_year = datetime.now().year
+            first_year = (
+                int(export_df["_parsed"].min().year) - 1
+                if export_df["_parsed"].notna().any()
+                else current_year - 1
+            )
+            start_years = list(range(current_year, first_year - 1, -1))
+            if datetime.now().month < 10:
+                start_years = [y for y in start_years if y < current_year] or [current_year - 1]
+
+            fin_year = st.selectbox(
+                "Financial Year",
+                start_years,
+                format_func=lambda y: f"{y}/{y + 1}  (1 Oct {y} – 30 Sep {y + 1})"
+            )
+
+            start_date = datetime(fin_year, 10, 1)
+            end_date = datetime(fin_year + 1, 9, 30, 23, 59, 59)
+
+            year_df = export_df[
+                (export_df["_parsed"] >= start_date) &
+                (export_df["_parsed"] <= end_date)
+            ].sort_values("_parsed").drop(columns="_parsed")
+
+            st.write(f"**{len(year_df)}** entries found.")
+            st.dataframe(year_df, width="stretch", hide_index=True)
+
+            if year_df.empty:
+                st.warning("No entries in this financial year.")
+            else:
+                buffer = BytesIO()
+                with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+                    year_df.to_excel(writer, index=False, sheet_name="Ledger")
+                    ws = writer.sheets["Ledger"]
+                    for col_cells in ws.columns:
+                        width = max(len(str(c.value or "")) for c in col_cells) + 2
+                        ws.column_dimensions[col_cells[0].column_letter].width = min(width, 50)
+
+                st.download_button(
+                    "📥 Download Excel",
+                    data=buffer.getvalue(),
+                    file_name=f"Ledger_{fin_year}-{fin_year + 1}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    width="stretch"
+                )
+    elif export_pin:
+        st.error("Incorrect PIN")
 
 
 #---------------------------------------------------
