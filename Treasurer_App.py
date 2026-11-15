@@ -3,6 +3,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 from datetime import datetime
 import pandas as pd
+import hmac
 
 # --------------------------------------------------
 # CONFIG
@@ -35,11 +36,6 @@ def get_sheets():
         "fifty": spreadsheet.worksheet("50-50"),
     }
 
-sheets = get_sheets()
-sheet = sheets["ledger"]
-todo_sheet = sheets["todo"]
-fifty_sheet = sheets["fifty"]
-
 @st.cache_data(ttl=30)
 def load_ledger_data():
     return sheet.get_all_records()
@@ -61,11 +57,8 @@ def load_fifty_data():
 if "show_success" not in st.session_state:
     st.session_state.show_success = False
 
-if "save_pin_ok" not in st.session_state:
-    st.session_state.save_pin_ok = False
-
-if "todo_pin_ok" not in st.session_state:
-    st.session_state.todo_pin_ok = False
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
 
 # --------------------------------------------------
 # APP STYLING
@@ -372,6 +365,44 @@ st.html(
     """
 )
 
+if st.session_state.authenticated:
+    tab1, tab3, tab4, tab2, tab5, tab6 = st.tabs(
+        ["🎫 Entry", "✅ To Do", "💰 50/50", "📖 Ledger", "🔧 Tools", "📥 Download"]
+    )
+else:
+    tab1, = st.tabs(["🎫 Entry"])
+
+with tab1:
+    if st.session_state.authenticated:
+        st.success("Logged in")
+        if st.button("Log out"):
+            for key in list(st.session_state.keys()):
+                del st.session_state[key]
+            st.rerun()
+    else:
+        st.subheader("Log in")
+        with st.form("login_form"):
+            admin_pin = st.text_input("6-Digit Admin PIN", type="password", max_chars=6)
+            login = st.form_submit_button("Log in")
+        if login:
+            configured_pin = st.secrets.get("ADMIN_PIN", "")
+            if (isinstance(configured_pin, str) and len(configured_pin) == 6
+                    and configured_pin.isascii() and configured_pin.isdigit()
+                    and len(admin_pin) == 6 and admin_pin.isascii() and admin_pin.isdigit()
+                    and hmac.compare_digest(admin_pin, configured_pin)):
+                st.session_state.authenticated = True
+                st.rerun()
+            else:
+                st.error("Incorrect PIN or invalid ADMIN_PIN configuration.")
+
+if not st.session_state.authenticated:
+    st.stop()
+
+sheets = get_sheets()
+sheet = sheets["ledger"]
+todo_sheet = sheets["todo"]
+fifty_sheet = sheets["fifty"]
+
 # --------------------------------------------------
 # Calculate Note/Coins Balance
 # --------------------------------------------------
@@ -417,16 +448,6 @@ for row in records:
 # TABS
 # --------------------------------------------------
 
-tab1, tab3, tab4, tab2, tab5, tab6 = st.tabs(
-    [
-        "🎫 Entry",
-        "✅ To Do",
-        "💰 50/50",
-        "📖 Ledger",
-        "🔧 Tools",
-        "📥 Download"
-    ]
-)
 
 # --------------------------------------------------
 # TAB 1 - TRANSACTIONS
@@ -437,30 +458,6 @@ with tab1:
     st.subheader("Record a transaction")
     st.caption("Add today's income, payment or lodgement to the club ledger.")
 
-# ----------------------------------------------
-# 1️⃣ SAVE TRANSACTION PIN (separate from Admin)
-# ----------------------------------------------
-    st.markdown("#### Unlock transaction entry")
-    st.caption("Enter your transaction PIN to enable saving.")
-
-    save_pin = st.text_input(
-        "Enter 4‑digit PIN",
-        type="password",
-        max_chars=4
-    )
-
-    if save_pin == st.secrets["SAVE_PIN"]:
-        st.session_state.save_pin_ok = True
-        st.success("Save PIN accepted")
-    elif save_pin == "":
-        st.session_state.save_pin_ok = False
-    else:
-        st.session_state.save_pin_ok = False
-        st.error("Incorrect Save PIN")
-
-# ----------------------------------------------
-# 2️⃣ TRANSACTION FORM (button disabled by PIN)
-# ----------------------------------------------
 
     with st.form(
         "ledger_form",
@@ -527,7 +524,6 @@ with tab1:
 
         submit = st.form_submit_button(
             "Save transaction",
-            disabled=not st.session_state.save_pin_ok,
             width="stretch"
         )
 
@@ -590,12 +586,7 @@ with tab2:
 
     st.markdown("---")
 
-    admin_pin = st.text_input(
-        "6-Digit Admin PIN",
-        type="password"
-    )
-
-    if admin_pin == st.secrets["ADMIN_PIN"]:
+    if st.session_state.authenticated:
 
         st.subheader("Current Balance")
 
@@ -645,9 +636,6 @@ with tab2:
             hide_index=True
         )
 
-    elif admin_pin:
-
-        st.error("Incorrect PIN")
 
 # --------------------------------------------------
 # TAB 3 - TO DO
@@ -663,27 +651,6 @@ with tab3:
 
     st.markdown("---")
 
-    st.markdown("*To Do - Pin*")
-
-    todo_pin = st.text_input(
-        "Enter 4-digit PIN",
-        type="password",
-        max_chars=4,
-        key="todo_pin"
-    )
-
-    if todo_pin == st.secrets["SAVE_PIN"]:
-        st.session_state.todo_pin_ok = True
-        st.success("PIN accepted")
-
-    elif todo_pin == "":
-        st.session_state.todo_pin_ok = False
-
-    else:
-        st.session_state.todo_pin_ok = False
-        st.error("Incorrect PIN")
-
-    st.markdown("---")
 
     with st.form(
         "todo_form",
@@ -697,7 +664,6 @@ with tab3:
 
         add_todo = st.form_submit_button(
             "Add task",
-            disabled=not st.session_state.todo_pin_ok,
             width="stretch"
         )
 
@@ -720,7 +686,7 @@ with tab3:
 
     st.markdown("---")
 
-    if st.session_state.todo_pin_ok:
+    if st.session_state.authenticated:
 
         todo_records = load_todo_data()
 
@@ -842,33 +808,7 @@ with tab4:
 with tab5:
     st.subheader("🛠️ Worksheet Maintenance")
     
-    # 1. PIN Security Check Section
-    st.markdown("**Maintenance access PIN**")
-    maint_pin = st.text_input(
-        "Enter 4-digit PIN",
-        type="password",
-        max_chars=4,
-        key="maint_pin"
-    )
-
-    # Initialize a session state key for this tab's security check if not already present
-    if "maint_pin_ok" not in st.session_state:
-        st.session_state.maint_pin_ok = False
-
-    # Validate the PIN against your existing SAVE_PIN secret
-    if maint_pin == st.secrets["SAVE_PIN"]:
-        st.session_state.maint_pin_ok = True
-        st.success("PIN accepted. Access granted.")
-    elif maint_pin == "":
-        st.session_state.maint_pin_ok = False
-    else:
-        st.session_state.maint_pin_ok = False
-        st.error("Incorrect PIN")
-
-    st.markdown("---")
-
-    # 2. Main Tools: Only visible if PIN is confirmed correct
-    if st.session_state.maint_pin_ok:
+    if st.session_state.authenticated:
         
         # Dropdown selection now including all 3 sheets
         maintenance_target = st.selectbox(
@@ -949,13 +889,7 @@ with tab6:
 
     from io import BytesIO
 
-    export_pin = st.text_input(
-        "Enter Admin PIN",
-        type="password",
-        key="export_pin"
-    )
-
-    if export_pin and export_pin == st.secrets["ADMIN_PIN"]:
+    if st.session_state.authenticated:
 
         export_records = load_ledger_data()
 
@@ -1015,8 +949,6 @@ with tab6:
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     width="stretch"
                 )
-    elif export_pin:
-        st.error("Incorrect PIN")
 
 
 #---------------------------------------------------
