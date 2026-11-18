@@ -370,7 +370,7 @@ if st.session_state.authenticated:
         ["🎫 Entry", "✅ To Do", "💰 50/50", "📖 Ledger", "🔧 Tools", "📥 Download"]
     )
 else:
-    tab1, = st.tabs(["🎫 Entry"])
+    tab1, = st.tabs(["🚫 Entry"])
 
 with tab1:
     if st.session_state.authenticated:
@@ -443,12 +443,6 @@ for row in records:
 
         elif trans_type in ["Money Out", "Lodgement"]:
             coins_balance -= amount
-
-# --------------------------------------------------
-# TABS
-# --------------------------------------------------
-
-
 # --------------------------------------------------
 # TAB 1 - TRANSACTIONS
 # --------------------------------------------------
